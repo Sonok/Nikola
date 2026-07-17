@@ -83,6 +83,63 @@ Talking point: this is a ring buffer — the core structure of telemetry/log ing
 Don't scan the board. Per player keep `rows[n]`, `cols[n]`, `diag`, `anti` counters; a move wins
 when any counter hits n. O(1) per move. (Use +1 for player 1, -1 for player 2 on shared counters.)
 
+## 588. Design In-Memory File System (Hard) — ⚠ FIRSTHAND REPORT: asked last cycle
+Not on the public tag list, but a friend was explicitly asked this in a Tesla interview last
+cycle. Treat it as Tier 1 — drill it right after LRU Cache. It's the design pattern at its
+biggest: a tree of nodes + path parsing + clean class structure.
+
+Key insight: one node type for both files and directories keeps the code short.
+
+```python
+class Node:
+    def __init__(self):
+        self.children = {}       # name -> Node (empty for files)
+        self.content = ""        # non-empty only for files
+        self.is_file = False
+
+class FileSystem:
+    def __init__(self):
+        self.root = Node()
+
+    def _walk(self, path):                    # "/a/b/c" -> node, creating dirs on the way
+        node = self.root
+        if path == "/":
+            return node
+        for part in path.strip("/").split("/"):
+            node = node.children.setdefault(part, Node())
+        return node
+
+    def ls(self, path: str) -> list[str]:
+        node = self._walk(path)
+        if node.is_file:
+            return [path.rstrip("/").split("/")[-1]]   # ls on a file -> just its name
+        return sorted(node.children)
+
+    def mkdir(self, path: str) -> None:
+        self._walk(path)                       # setdefault creates the whole chain
+
+    def addContentToFile(self, path: str, content: str) -> None:
+        node = self._walk(path)
+        node.is_file = True
+        node.content += content                # APPEND, not replace
+
+    def readContentFromFile(self, path: str) -> str:
+        return self._walk(path).content
+```
+Traps: `ls` on a file returns a one-element list with the file's NAME (not path, not content);
+`ls` output must be sorted; `addContentToFile` appends. Complexity: O(path parts) per op,
+O(n log n) for the sort in ls.
+
+Follow-ups to be ready for (say them proactively if time remains):
+- **delete/move**: delete needs the PARENT node — walk to parent, `del children[name]`;
+  move = detach + attach. This is why some prefer `_walk` to return (parent, name).
+- **permissions / metadata**: hang an attrs dict on Node.
+- **concurrency**: coarse lock per FileSystem vs. lock striping per directory — tie to the
+  concurrency emphasis this team reportedly has.
+- **persistence**: this is a trie in memory; real FS = same tree serialized to blocks/inodes.
+Related: LC 1166 Design File System (Medium) is the lighter version — good warmup if you
+have 20 spare minutes.
+
 ## 341. Flatten Nested List Iterator (Medium) — second pass if time
 Stack of reversed items; `hasNext()` unwraps lists until top is an integer. Lazy evaluation
 talking point: don't flatten upfront if the stream is huge.

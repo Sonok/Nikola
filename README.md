@@ -30,7 +30,7 @@ was Round 1 = metrics-API design; another reported concurrency as "essential."
 ## 10-day schedule
 | Day | Focus |
 |---|---|
-| 1–2 | `leetcode/01-design.md` (LRU Cache until blank-editor ~12 min) |
+| 1–2 | `leetcode/01-design.md` (LRU Cache until blank-editor ~12 min; **LC 588 In-Memory File System — firsthand report of it being asked last cycle**) |
 | 3–4 | `leetcode/02-parsing-stack.md` |
 | 5–6 | `leetcode/03-graphs.md` |
 | 7 | `leetcode/04-arrays-strings.md` (refresh day) |
